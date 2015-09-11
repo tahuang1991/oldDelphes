@@ -1,0 +1,26 @@
+
+Processing examples/DiHiggs_htobb.C...
+** Chain contains 10 events
+ genParticles size 1404 Entriesfast 1404
+ genP Id 99926 Pt 3.81193e-14 M1 57 M2 62 D1 19 D2 20
+ genP Id 25 Pt 99.6829 M1 0 M2 -1 D1 22 D2 22
+ genP Id 25 Pt 99.6829 M1 0 M2 -1 D1 21 D2 21
+ jet Pt 58.1744 Refparticles size 14
+ genP Id 22 Pt 0.207093 M1 695 M2 -1 D1 -1 D2 -1
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ genP Id 681885104 Pt 0 M1 2743 M2 -1 D1 8 D2 0
+ muon eta -0.949604 phi 2.39478 Pt 39.0552
+** Exiting...
+
+ *** Break *** keyboard interrupt :0:

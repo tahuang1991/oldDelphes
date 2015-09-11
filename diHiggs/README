@@ -1,0 +1,1 @@
+Do not setup CMSSW env, otherwise, it will cause the problem about root libs
