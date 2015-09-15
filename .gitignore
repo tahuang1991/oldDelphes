@@ -3,4 +3,5 @@
 *.log
 *.err
 *.out
-
+*.exe
+DiHiggs*.root

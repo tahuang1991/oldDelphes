@@ -2,8 +2,9 @@
 # Order of execution of various modules
 #######################################
 
+#  PileUpMerger
+#TrackPileUpSubtractor
 set ExecutionPath {
-  PileUpMerger
   ParticlePropagator
 
   ChargedHadronTrackingEfficiency
@@ -16,7 +17,6 @@ set ExecutionPath {
 
   TrackMerger
   Calorimeter
-  TrackPileUpSubtractor
   NeutralTowerMerger
   EFlowMerger
 
@@ -38,8 +38,6 @@ set ExecutionPath {
 
   Rho
   FastJetFinder
-  PileUpJetID
-  JetPileUpSubtractor
 
   JetEnergyScale
 
@@ -52,6 +50,8 @@ set ExecutionPath {
 
   TreeWriter
 }
+  #PileUpJetID
+  #JetPileUpSubtractor
 
 
 
@@ -96,7 +96,8 @@ module PileUpMerger PileUpMerger {
 #################################
 
 module ParticlePropagator ParticlePropagator {
-  set InputArray PileUpMerger/stableParticles
+  #set InputArray PileUpMerger/stableParticles
+  set InputArray Delphes/stableParticles
 
   set OutputArray stableParticles
   set ChargedHadronOutputArray chargedHadrons
@@ -327,7 +328,7 @@ module Calorimeter Calorimeter {
 ##########################
 # Track pile-up subtractor
 ##########################
-
+#not use this module for PU0
 module TrackPileUpSubtractor TrackPileUpSubtractor {
 # add InputArray InputArray OutputArray
   add InputArray Calorimeter/eflowTracks eflowTracks
@@ -358,8 +359,8 @@ module Merger NeutralTowerMerger {
 
 module Merger EFlowMerger {
 # add InputArray InputArray
-  add InputArray TrackPileUpSubtractor/eflowTracks
-  #add InputArray Calorimeter/eflowTracks
+  #add InputArray TrackPileUpSubtractor/eflowTracks #only for PU case
+  add InputArray Calorimeter/eflowTracks
   add InputArray Calorimeter/eflowPhotons
   add InputArray Calorimeter/eflowNeutralHadrons
   set OutputArray eflow
@@ -404,7 +405,8 @@ module Isolation PhotonIsolation {
 #####################
 
 module Efficiency ElectronEfficiency {
-  set InputArray TrackPileUpSubtractor/electrons
+  #set InputArray TrackPileUpSubtractor/electrons #only for PU case
+  set InputArray ElectronEnergySmearing/electrons 
   set OutputArray electrons
 
   # set EfficiencyFormula {efficiency formula as a function of eta and pt}
@@ -438,7 +440,8 @@ module Isolation ElectronIsolation {
 #################
 
 module Efficiency MuonEfficiency {
-  set InputArray TrackPileUpSubtractor/muons
+  #set InputArray TrackPileUpSubtractor/muons # only for PU case
+  set InputArray MuonMomentumSmearing/muons
   set OutputArray muons
 
   # set EfficiencyFormula {efficiency as a function of eta and pt}
@@ -611,7 +614,7 @@ module FastJetFinder FastJetFinder {
 ###########################
 # Jet Pile-Up ID
 ###########################
-
+#Not use for PU0
 module PileUpJetID PileUpJetID {
   set JetInputArray FastJetFinder/jets
   set TrackInputArray Calorimeter/eflowTracks
@@ -625,7 +628,7 @@ module PileUpJetID PileUpJetID {
   set OutputArray jets
 
   set UseConstituents 0
-  set ParameterR 0.5
+  set ParameterR 0.4
 
   set JetPTMin 20.0
 }
@@ -633,7 +636,7 @@ module PileUpJetID PileUpJetID {
 ###########################
 # Jet Pile-Up Subtraction
 ###########################
-
+#Not use for PU0
 module JetPileUpSubtractor JetPileUpSubtractor {
   set JetInputArray PileUpJetID/jets
   set RhoInputArray Rho/rho
@@ -649,7 +652,8 @@ module JetPileUpSubtractor JetPileUpSubtractor {
 ##################
 
 module EnergyScale JetEnergyScale {
-  set InputArray JetPileUpSubtractor/jets
+  set InputArray FastJetFinder/jets
+  #set InputArray JetPileUpSubtractor/jets #only for PU case
   set OutputArray jets
 
  # scale formula for jets
@@ -757,10 +761,10 @@ module TreeWriter TreeWriter {
   add Branch UniqueObjectFinder/muons Muon Muon
 
   add Branch MissingET/momentum MissingET MissingET
-  add Branch MissingET/momentum GenMissingET MissingET
+  add Branch GenMissingET/momentum GenMissingET MissingET
 
   add Branch ScalarHT/energy ScalarHT ScalarHT
   add Branch Rho/rho Rho Rho
-  add Branch PileUpMerger/vertices Vertex Vertex
+  #add Branch PileUpMerger/vertices Vertex Vertex
 }
 
