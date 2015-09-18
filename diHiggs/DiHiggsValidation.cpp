@@ -31,14 +31,14 @@ using namespace std;
 
 // Here you can put your analysis macro
 
-#include "DiHiggstollbb.h"
+#include "DiHiggstoWWbb.h"
 
 //void test(TString inputFile);
 //------------------------------------------------------------------------------
 
 int main(int argc, char *argv[])
 {
-  const char *appName = "DiHiggsAnalyzer";
+  const char *appName = "Example";
 
   if(argc < 5)
   {
@@ -82,12 +82,12 @@ int main(int argc, char *argv[])
 	}
    
   //DiHiggsWWbb *diHiggsValidate = new DiHiggsValition();
-  DiHiggstollbb *diHiggsAna = new DiHiggstollbb(inputFile, outputFile, nEvent);
+  DiHiggstoWWbb *diHiggsValidate = new DiHiggstoWWbb(inputFile, outputFile, nEvent);
 
 //------------------------------------------------------------------------------
 // Here you call your macro's main function 
-  diHiggsAna->DiHiggstollbbrun();
-  diHiggsAna->writeTree();
+  diHiggsValidate->DiHiggstoWWbbrun();
+  diHiggsValidate->writeTree();
 //------------------------------------------------------------------------------
 
 }

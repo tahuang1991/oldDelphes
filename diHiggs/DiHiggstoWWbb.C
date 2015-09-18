@@ -18,8 +18,8 @@
 #include "TPaveText.h"
 #include "TLorentzVector.h"
 
-//#include "DelphesClasses.h"
-#include "DiHiggs_h2tohh.h"
+#include "classes/DelphesClasses.h"
+#include "DiHiggstoWWbb.h"
 #include "MMC.h"
 
 using namespace std;
@@ -31,275 +31,45 @@ class GenParticle;
 class Jet;
 class Track;
 class Tower;
-
-void printGenParticle(GenParticle *genP)
+ 
+DiHiggstoWWbb::DiHiggstoWWbb(TString input_File, TString output_File, int numEvents)
+//void DiHiggs_htobb()
 {
-    cout << " genP Id " << genP->PID <<" Pt " << genP->PT << " M1 "<< genP->M1<<" M2 "<< genP->M2;
-    cout << " D1 "<< genP->D1 <<" D2 "<<genP->D2 << " p4 "; genP->P4().Print();
-}
-
-void printJet(Jet *jet)
-{
-
-  GenParticle *particle;
-  Muon *muon;
-
-  Track *track;
-  Tower *tower;
-
-  TObject *object;
-  TLorentzVector momentum;
-      momentum.SetPxPyPzE(0.0, 0.0, 0.0, 0.0);
-      //TRefArray constituentarray(jet->Constituents);
-      TRefArray particlearray(jet->Particles);
-      cout<<"Looping over jet constituents. Jet pt: "<<jet->PT<<", eta: "<<jet->Eta<<", phi: "<<jet->Phi<<endl;      
-
-      // Loop over all jet's constituents
-      for(Int_t j = 0; j < jet->Constituents.GetEntriesFast(); ++j)
-      {
-        object = jet->Constituents.At(j);
-        // Check if the constituent is accessible
-        if(object == 0) continue;
-
-        if(object->IsA() == GenParticle::Class())
-        {
-          particle = (GenParticle*) object;
-          cout << "    GenPart pt: " << particle->PT << ", eta: " << particle->Eta << ", phi: " << particle->Phi << endl;
-          momentum += particle->P4();
-        }
-        else if(object->IsA() == Track::Class())
-        {
-          track = (Track*) object;
-          cout << "    Track pt: " << track->PT << ", eta: " << track->Eta << ", phi: " << track->Phi << endl;
-          momentum += track->P4();
-        }
-        else if(object->IsA() == Tower::Class())
-        {
-          tower = (Tower*) object;
-          cout << "    Tower pt: " << tower->ET << ", eta: " << tower->Eta << ", phi: " << tower->Phi << endl;
-          momentum += tower->P4();
-        }
-        else if(object->IsA() == Muon::Class())
-        {
-          muon = (Muon*) object;
-          cout << "    Muon pt: " << muon->PT << ", eta: " << muon->Eta << ", phi: " << muon->Phi << endl;
-          momentum += muon->P4();
-        }
-      }
-      cout << " constituent sum pt:  " << momentum.Pt() <<" eta "<< momentum.Eta()  <<"  phi " << momentum.Phi() << std::endl;
-
-
-      for (Int_t j =0; j<jet->Particles.GetEntries();  j++){
-     		GenParticle *p_tmp = (GenParticle*) particlearray.At(j);
-		printGenParticle(p_tmp);
-	}
-}
-//get the finalsate of genp 
-void getFinalState(GenParticle* &genp, TClonesArray *branchParticle)
-{
-       //cout << "before getFinalState "; printGenParticle(genp);
-       while ((genp->D1>0 && ((GenParticle*)branchParticle->At(genp->D1))->PID == genp->PID)
-	     && (genp->D2 >0 && ((GenParticle*)branchParticle->At(genp->D2))->PID == genp->PID)){
- 	//if ( genp->D1>0 && ((GenParticle*)branchParticle->At(genp->D1))->PID == genp->PID) 
- 	genp = (GenParticle*)branchParticle->At(genp->D1);
-        //else   genp = (GenParticle*)branchParticle->At(genp->D2);
-        //cout << "during getFinalState "; printGenParticle(genp);
-       }
-//	cout <<" final State "; printGenParticle(genp);
-}
-
-//------------------------------------------------------------------------------
-
-
-void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
-{
-
+  //gSystem->Load("libDelphes");
+  inputFile = input_File;
+  outputFile = output_File;
+  nEvents = numEvents;
+ 
 //config parameters
-  bool runMMC_ = false;
-  double jetsPt_ =20;
-  double jetsEta_=5.0;
-  double bjetsPt_ =30;
-  double bjetsEta_ = 2.5;
-  double jetsDeltaR_ = 0.4;//deltaR matching
-  double jetleptonDeltaR_ = 0.3;
-  double leptonsDeltaR_ = 0.4;//deltaR matching
+  runMMC_ = false;
+  jetsPt_ =20;
+  jetsEta_=5.0;
+  bjetsPt_ =30;
+  bjetsEta_ = 2.5;
+  jetsDeltaR_ = 0.4;//deltaR matching
+  jetleptonDeltaR_ = 0.3;
+  leptonsDeltaR_ = 0.4;//deltaR matching
   //double leptonIso_ = 0.15;
-  double muonPt2_ = 20;
-  double muonPt1_ = 20;
-  double muonsEta_ = 2.4;
-  double metPt_ = 20;
+  muonPt2_ = 20;
+  muonPt1_ = 20;
+  muonsEta_ = 2.4;
+  metPt_ = 20;
      
 
-//create branches 
-  Float_t b1_px =0;
-  Float_t b1_py =0;
-  Float_t b1_pz =0;
-  Float_t b1_eta = 0;
-  Float_t b1_phi = 0;
-  Float_t b1_pt =0;
-  Float_t b1_energy =0;
-  Float_t b2_px =0;
-  Float_t b2_py=0;
-  Float_t b2_pz=0;
-  Float_t b2_eta = 0;
-  Float_t b2_phi = 0;
-  Float_t b2_pt =0;
-  Float_t b2_energy=0;
-  Float_t htobb_px=0;
-  Float_t htobb_py=0;
-  Float_t htobb_pz=0;
-  Float_t htobb_energy=0;
-  Float_t htobb_mass =0;
-  Bool_t htobb=false; 
-   
-  Float_t genb1jet_px=0;
-  Float_t genb1jet_py=0;
-  Float_t genb1jet_pz=0;
-  Float_t genb1jet_eta=0;
-  Float_t genb1jet_phi=0;
-  Float_t genb1jet_pt=0;
-  Float_t genb1jet_energy=0;
-  Float_t genb2jet_px=0;
-  Float_t genb2jet_py=0;
-  Float_t genb2jet_pz=0;
-  Float_t genb2jet_eta=0;
-  Float_t genb2jet_phi=0;
-  Float_t genb2jet_pt=0;
-  Float_t genb2jet_energy=0;
-  Float_t dR_genb1jet=0;
-  Float_t dR_genb2jet=0;
-  Bool_t hasgenb1jet=false;
-  Bool_t hasgenb2jet=false;
-  
-  Float_t dR_b1jet = 2.0;
-  Float_t dR_b2jet = 2.0;
-  Float_t b1jet_px=0;
-  Float_t b1jet_py=0;
-  Float_t b1jet_pz=0;
-  Float_t b1jet_eta=0;
-  Float_t b1jet_phi=0;
-  Float_t b1jet_pt=0;
-  Float_t b1jet_energy=0;
-  Float_t b2jet_px=0;
-  Float_t b2jet_py=0;
-  Float_t b2jet_pz=0;
-  Float_t b2jet_eta=0;
-  Float_t b2jet_phi=0;
-  Float_t b2jet_pt=0;
-  Float_t b2jet_energy=0;
-  Bool_t hasb1jet=false;
-  Bool_t hasb2jet=false;
+  init();
+}
 
-  Float_t mu1_px =0;
-  Float_t mu1_py =0;
-  Float_t mu1_pz =0;
-  Float_t mu1_eta =0;
-  Float_t mu1_phi =0;
-  Float_t mu1_pt =0;
-  Float_t mu1_energy =0;
-  Float_t mu2_px =0;
-  Float_t mu2_py =0;
-  Float_t mu2_pz =0;
-  Float_t mu2_eta =0;
-  Float_t mu2_phi =0;
-  Float_t mu2_pt =0;
-  Float_t mu2_energy =0;
-  Float_t nu1_px =0;
-  Float_t nu1_py =0;
-  Float_t nu1_pz =0;
-  Float_t nu1_eta =0;
-  Float_t nu1_phi =0;
-  Float_t nu1_energy =0;
-  Float_t nu2_px =0;
-  Float_t nu2_py =0;
-  Float_t nu2_pz =0;
-  Float_t nu2_eta =0;
-  Float_t nu2_phi =0;
-  Float_t nu2_energy =0;
-  
-  Bool_t Wtomu2nu2=false;
-  Bool_t Wtomu1nu1=false;
-  Bool_t htoWW=false;
-  
-  Float_t Muon1_beforeIso_px = 0.0;
-  Float_t Muon1_beforeIso_py = 0.0;
-  Float_t Muon1_beforeIso_pz = 0.0;
-  Float_t Muon1_beforeIso_eta = 0.0;
-  Float_t Muon1_beforeIso_phi = 0.0;
-  Float_t Muon1_beforeIso_pt = 0.0;
-  Float_t Muon1_beforeIso_energy = 0.0;
-  Float_t Muon2_beforeIso_px = 0.0;
-  Float_t Muon2_beforeIso_py = 0.0;
-  Float_t Muon2_beforeIso_pz = 0.0;
-  Float_t Muon2_beforeIso_eta = 0.0;
-  Float_t Muon2_beforeIso_phi = 0.0;
-  Float_t Muon2_beforeIso_pt = 0.0;
-  Float_t Muon2_beforeIso_energy = 0.0;
-  Float_t dR_mu1_beforeIso = 2.0;
-  Float_t dR_mu2_beforeIso = 2.0;
- 
-  Bool_t Muon1_beforeIso_hasgenMu = false; 
-  Bool_t Muon2_beforeIso_hasgenMu = false; 
-  Bool_t Muon1_beforeIso_passIso = false;
-  Bool_t Muon2_beforeIso_passIso = false; 
-  Bool_t hasMuon1_beforeIso = false;
-  Bool_t hasMuon2_beforeIso = false;
-  
-  Float_t Muon1_px = 0;
-  Float_t Muon1_py = 0;
-  Float_t Muon1_pz = 0;
-  Float_t Muon1_eta = 0;
-  Float_t Muon1_phi = 0;
-  Float_t Muon1_pt = 0;
-  Float_t Muon1_energy = 0;
-  Float_t Muon2_px = 0;
-  Float_t Muon2_py = 0;
-  Float_t Muon2_pz = 0;
-  Float_t Muon2_eta = 0;
-  Float_t Muon2_phi = 0;
-  Float_t Muon2_pt = 0;
-  Float_t Muon2_energy = 0;
-  Float_t dR_mu1 = 2.0;
-  Float_t dR_mu2 = 2.0;
 
-  Bool_t Muon1_hasgenMu = false; 
-  Bool_t Muon2_hasgenMu = false; 
-  
-  Float_t htoWW_px =0;
-  Float_t htoWW_py =0;
-  Float_t htoWW_pz =0;
-  Float_t htoWW_energy =0;
-  Float_t htoWW_mass = 0;
+void DiHiggstoWWbb::init(){ 
+  chain = new TChain("Delphes");
+  //const char *inputFile("/home/taohuang/Herwig++/Delphes-3.2.0/delphes_output.root");
+  //const char *inputFile("/fdata/hepx/store/user/taohuang/Hhh/delphes320_B3_100k.root");
+  chain->Add(inputFile);
 
-  Float_t dR_b1l1;
-  Float_t dR_b1l2;
-  Float_t dR_b2l1;
-  Float_t dR_b2l2;
-  Float_t dR_l1l2;
-  Float_t dR_b1b2;
-  Float_t mass_l1l2;
-  Float_t mass_b1b2;
+  treeReader = new ExRootTreeReader(chain);
 
-  Float_t genmet = 0;
-  Float_t genmet_phi = 0;
-  Float_t genmet_px = 0;
-  Float_t genmet_py = 0;
-  Float_t met = 0;
-  Float_t met_phi = 0;
-  Float_t met_px = 0;
-  Float_t met_py = 0;
 
-  Float_t h2tohh_mass =0;
-//additional cuts
-  Bool_t hasMET = false;
-  Bool_t hasGenMET = false;
-  Bool_t hastwomuons = false;
-  Bool_t hastwogenmuons = false;
-  Bool_t hasMuon1 = false;
-  Bool_t hasMuon2 = false;
-  Bool_t hasdRljet = false;
-  Bool_t h2tohh =false;
-  
+  evtree = new TTree("evtree","event tree");
   evtree->Branch("b1_px",&b1_px, "b1_px/F");
   evtree->Branch("b1_py",&b1_py, "b1_py/F");
   evtree->Branch("b1_pz",&b1_pz, "b1_pz/F");
@@ -464,6 +234,288 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
   evtree->Branch("hasdRljet",&hasdRljet, "hasdRljet/B");
   evtree->Branch("h2tohh_mass",&h2tohh_mass,"h2tohh_mass/F");
   evtree->Branch("h2tohh",&h2tohh,"h2tohh/B");
+  
+ // AnalyseEvents(treeReader, evtree);
+}
+
+
+void DiHiggstoWWbb::writeTree(){
+
+  //evtree->Print();
+  TFile *file = new TFile(outputFile,"recreate");
+
+  evtree->Write();
+  file->Close();
+//delete file;
+}
+
+
+DiHiggstoWWbb::~DiHiggstoWWbb(){
+
+
+  cout << "** Exiting..." << endl;
+
+  delete treeReader;
+  delete chain;
+  delete evtree;
+}
+
+void DiHiggstoWWbb::printGenParticle(GenParticle *genP)
+{
+    cout << " genP Id " << genP->PID <<" Pt " << genP->PT << " M1 "<< genP->M1<<" M2 "<< genP->M2;
+    cout << " D1 "<< genP->D1 <<" D2 "<<genP->D2 << " p4 "; genP->P4().Print();
+}
+
+void DiHiggstoWWbb::printJet(Jet *jet)
+{
+
+  GenParticle *particle;
+  Muon *muon;
+
+  Track *track;
+  Tower *tower;
+
+  TObject *object;
+  TLorentzVector momentum;
+      momentum.SetPxPyPzE(0.0, 0.0, 0.0, 0.0);
+      //TRefArray constituentarray(jet->Constituents);
+      TRefArray particlearray(jet->Particles);
+      cout<<"Looping over jet constituents. Jet pt: "<<jet->PT<<", eta: "<<jet->Eta<<", phi: "<<jet->Phi<<endl;      
+
+      // Loop over all jet's constituents
+      for(int j = 0; j < jet->Constituents.GetEntriesFast(); ++j)
+      {
+        object = jet->Constituents.At(j);
+        // Check if the constituent is accessible
+        if(object == 0) continue;
+
+        if(object->IsA() == GenParticle::Class())
+        {
+          particle = (GenParticle*) object;
+          cout << "    GenPart pt: " << particle->PT << ", eta: " << particle->Eta << ", phi: " << particle->Phi << endl;
+          momentum += particle->P4();
+        }
+        else if(object->IsA() == Track::Class())
+        {
+          track = (Track*) object;
+          cout << "    Track pt: " << track->PT << ", eta: " << track->Eta << ", phi: " << track->Phi << endl;
+          momentum += track->P4();
+        }
+        else if(object->IsA() == Tower::Class())
+        {
+          tower = (Tower*) object;
+          cout << "    Tower pt: " << tower->ET << ", eta: " << tower->Eta << ", phi: " << tower->Phi << endl;
+          momentum += tower->P4();
+        }
+        else if(object->IsA() == Muon::Class())
+        {
+          muon = (Muon*) object;
+          cout << "    Muon pt: " << muon->PT << ", eta: " << muon->Eta << ", phi: " << muon->Phi << endl;
+          momentum += muon->P4();
+        }
+      }
+      cout << " constituent sum pt:  " << momentum.Pt() <<" eta "<< momentum.Eta()  <<"  phi " << momentum.Phi() << std::endl;
+
+
+      for (int j =0; j<jet->Particles.GetEntries();  j++){
+     		GenParticle *p_tmp = (GenParticle*) particlearray.At(j);
+		printGenParticle(p_tmp);
+	}
+}
+//get the finalsate of genp 
+void DiHiggstoWWbb::getFinalState(GenParticle* &genp, TClonesArray *branchParticle)
+{
+  //     cout << "before getFinalState "; printGenParticle(genp);
+       while ((genp->D1>0 && ((GenParticle*)branchParticle->At(genp->D1))->PID == genp->PID)
+	     && (genp->D2 >0 && ((GenParticle*)branchParticle->At(genp->D2))->PID == genp->PID)){
+ 	//if ( genp->D1>0 && ((GenParticle*)branchParticle->At(genp->D1))->PID == genp->PID) 
+ 	genp = (GenParticle*)branchParticle->At(genp->D1);
+        //else   genp = (GenParticle*)branchParticle->At(genp->D2);
+        //cout << "during getFinalState "; printGenParticle(genp);
+       }
+//	cout <<" final State "; printGenParticle(genp);
+}
+
+//------------------------------------------------------------------------------
+
+
+void DiHiggstoWWbb::initBranches(){
+//create branches 
+   b1_px =0;
+   b1_py =0;
+   b1_pz =0;
+   b1_eta = 0;
+   b1_phi = 0;
+   b1_pt =0;
+   b1_energy =0;
+   b2_px =0;
+   b2_py=0;
+   b2_pz=0;
+   b2_eta = 0;
+   b2_phi = 0;
+   b2_pt =0;
+   b2_energy=0;
+   htobb_px=0;
+   htobb_py=0;
+   htobb_pz=0;
+   htobb_energy=0;
+   htobb_mass =0;
+   htobb=false; 
+   
+   genb1jet_px=0;
+   genb1jet_py=0;
+   genb1jet_pz=0;
+   genb1jet_eta=0;
+   genb1jet_phi=0;
+   genb1jet_pt=0;
+   genb1jet_energy=0;
+   genb2jet_px=0;
+   genb2jet_py=0;
+   genb2jet_pz=0;
+   genb2jet_eta=0;
+   genb2jet_phi=0;
+   genb2jet_pt=0;
+   genb2jet_energy=0;
+   dR_genb1jet=0;
+   dR_genb2jet=0;
+   hasgenb1jet=false;
+   hasgenb2jet=false;
+  
+   dR_b1jet = 2.0;
+   dR_b2jet = 2.0;
+   b1jet_px=0;
+   b1jet_py=0;
+   b1jet_pz=0;
+   b1jet_eta=0;
+   b1jet_phi=0;
+   b1jet_pt=0;
+   b1jet_energy=0;
+   b2jet_px=0;
+   b2jet_py=0;
+   b2jet_pz=0;
+   b2jet_eta=0;
+   b2jet_phi=0;
+   b2jet_pt=0;
+   b2jet_energy=0;
+   hasb1jet=false;
+   hasb2jet=false;
+
+   mu1_px =0;
+   mu1_py =0;
+   mu1_pz =0;
+   mu1_eta =0;
+   mu1_phi =0;
+   mu1_pt =0;
+   mu1_energy =0;
+   mu2_px =0;
+   mu2_py =0;
+   mu2_pz =0;
+   mu2_eta =0;
+   mu2_phi =0;
+   mu2_pt =0;
+   mu2_energy =0;
+   nu1_px =0;
+   nu1_py =0;
+   nu1_pz =0;
+   nu1_eta =0;
+   nu1_phi =0;
+   nu1_energy =0;
+   nu2_px =0;
+   nu2_py =0;
+   nu2_pz =0;
+   nu2_eta =0;
+   nu2_phi =0;
+   nu2_energy =0;
+  
+   Wtomu2nu2=false;
+   Wtomu1nu1=false;
+   htoWW=false;
+  
+   Muon1_beforeIso_px = 0.0;
+   Muon1_beforeIso_py = 0.0;
+   Muon1_beforeIso_pz = 0.0;
+   Muon1_beforeIso_eta = 0.0;
+   Muon1_beforeIso_phi = 0.0;
+   Muon1_beforeIso_pt = 0.0;
+   Muon1_beforeIso_energy = 0.0;
+   Muon2_beforeIso_px = 0.0;
+   Muon2_beforeIso_py = 0.0;
+   Muon2_beforeIso_pz = 0.0;
+   Muon2_beforeIso_eta = 0.0;
+   Muon2_beforeIso_phi = 0.0;
+   Muon2_beforeIso_pt = 0.0;
+   Muon2_beforeIso_energy = 0.0;
+   dR_mu1_beforeIso = 2.0;
+   dR_mu2_beforeIso = 2.0;
+ 
+   Muon1_beforeIso_hasgenMu = false; 
+   Muon2_beforeIso_hasgenMu = false; 
+   Muon1_beforeIso_passIso = false;
+   Muon2_beforeIso_passIso = false; 
+   hasMuon1_beforeIso = false;
+   hasMuon2_beforeIso = false;
+  
+   Muon1_px = 0;
+   Muon1_py = 0;
+   Muon1_pz = 0;
+   Muon1_eta = 0;
+   Muon1_phi = 0;
+   Muon1_pt = 0;
+   Muon1_energy = 0;
+   Muon2_px = 0;
+   Muon2_py = 0;
+   Muon2_pz = 0;
+   Muon2_eta = 0;
+   Muon2_phi = 0;
+   Muon2_pt = 0;
+   Muon2_energy = 0;
+   dR_mu1 = 2.0;
+   dR_mu2 = 2.0;
+
+   Muon1_hasgenMu = false; 
+   Muon2_hasgenMu = false; 
+  
+   htoWW_px =0;
+   htoWW_py =0;
+   htoWW_pz =0;
+   htoWW_energy =0;
+   htoWW_mass = 0;
+
+   dR_b1l1=-1.0;
+   dR_b1l2=-1.0;
+   dR_b2l1=-1.0;
+   dR_b2l2=-1.0;
+   dR_l1l2=-1.0;
+   dR_b1b2=-1.0;
+   mass_l1l2 = -1.0;
+   mass_b1b2 = -1.0;
+
+   genmet = 0;
+   genmet_phi = 0;
+   genmet_px = 0;
+   genmet_py = 0;
+   met = 0;
+   met_phi = 0;
+   met_px = 0;
+   met_py = 0;
+
+   h2tohh_mass =0;
+//additional cuts
+   hasMET = false;
+   hasGenMET = false;
+   hastwomuons = false;
+   hastwogenmuons = false;
+   hasMuon1 = false;
+   hasMuon2 = false;
+   hasdRljet = false;
+   h2tohh =false;
+}
+
+
+  
+void DiHiggstoWWbb::DiHiggstoWWbbrun()
+{
+
 	//loop over events 1. find h->b bbar; 2 find two bjets after cuts; 3 fill Tree
   TClonesArray *branchParticle = treeReader->UseBranch("Particle");
   TClonesArray *branchElectron = treeReader->UseBranch("Electron");
@@ -483,11 +535,11 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
   TClonesArray *branchMissingET = treeReader->UseBranch("MissingET");
   TClonesArray *branchGenMissingET = treeReader->UseBranch("GenMissingET");
 
-  Long64_t allEntries = treeReader->GetEntries();
+  long allEntries = treeReader->GetEntries();
 
   cout << "** Chain contains " << allEntries << " events" << endl;
 
-  Long64_t entry;
+  long entry;
   Jet *genjet, *jet, *b1jet, *b2jet, *genb1jet, *genb2jet;
   b1jet=0; b2jet=0; genb1jet =0; genb2jet=0;
   MissingET *Met, *genMet;
@@ -509,41 +561,23 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
   //incase compilation error
   genhtoWW = 0;
 
-  Int_t i;
+  int i =0;
   // Loop over all events
   //TFile *MMCfile = new TFile("testMMC.root", "recreate"); 
-  for(entry = 0; entry < allEntries; ++entry)
+  if (nEvents < 0) nEvents = allEntries;
+  for(entry = 0; entry < nEvents; ++entry)
   //for(entry = 0; entry < 1000; ++entry)
   //for(entry = 0; entry < 10000; ++entry)
   {
     //gen
-    htobb = false;
-    hasgenb1jet = false;
-    hasgenb2jet = false;
-    Wtomu1nu1 = false;
-    Wtomu2nu2 = false;
-    hastwogenmuons = false;
-    htoWW = false;
-    hasGenMET = false; 
-    //reco 
-    hasb1jet = false;
-    hasb2jet = false;
-    hastwomuons = false;
-    hasMET = false; 
-    hasMuon1_beforeIso = false; 
-    hasMuon2_beforeIso = false; 
-    hasMuon1 = false; 
-    hasMuon2 = false; 
-    hasdRljet = false;
-     
-    dR_b1jet = 2.0;
-    dR_b2jet = 2.0;
-    dR_genb1jet = 2.0;
-    dR_genb2jet = 2.0;
-    dR_mu1 = 2.0;  dR_mu2 = 2.0;
-    dR_mu1_beforeIso = 2.0; dR_mu2_beforeIso = 2.0;
+    initBranches();
+
     // Load selected branches with data from specified event
-    treeReader->ReadEntry(entry);
+    bool readsuccess = treeReader->ReadEntry(entry);
+    if (not readsuccess) {
+	cout <<"can not read Entry through treeReader" << endl;
+	exit(0);
+	}
     cout <<" event id " << entry << endl;
     /*for (i =0; i < branchParticle->GetEntries(); ++i){
 	genP = (GenParticle*) branchParticle->At(i);
@@ -559,9 +593,9 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
          }
      }*/
      genh2 =  (GenParticle*) branchParticle->At(0); //printGenParticle(genP);
+     //printGenParticle(genh2); 
      h2tohh_mass = genh2->Mass;
      genhiggs1 =  (GenParticle*) branchParticle->At(genh2->D1); 
-     //printGenParticle(genhiggs1); 
      genhiggs2 =  (GenParticle*) branchParticle->At(genh2->D2); 
      //printGenParticle(genhiggs2);
      while ((genhiggs1->D1>0 && ((GenParticle*)branchParticle->At(genhiggs1->D1))->PID == genhiggs1->PID) 
@@ -643,7 +677,7 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
 		}
 	
     	getFinalState(genW1, branchParticle);	
-//	cout <<" htoWW genW1 "; printGenParticle(genW1);
+	//cout <<" htoWW genW1 "; printGenParticle(genW1);
     	getFinalState(genW2, branchParticle);	
 	//cout <<" htoWW genW2 "; printGenParticle(genW2);
 
@@ -699,6 +733,7 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
 	genb1jet_pt = genjet_p4.Pt();
 	hasgenb1jet = true;
 	genb1jet = genjet;
+	//cout <<"genb1jet pt "<< genb1jet_pt << endl;
         
        }
       if (htobb && genjet_p4.DeltaR(genb2->P4()) < dR_genb2jet && genjet_p4.DeltaR(genb2->P4()) < jetsDeltaR_){
@@ -708,6 +743,7 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
 	genb2jet_pt = genjet_p4.Pt();
 	hasgenb2jet = true;
 	genb2jet = genjet;
+	//cout <<"genb2jet pt "<< genb2jet_pt << endl;
        }
     }
 
@@ -726,6 +762,7 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
         b1jet_px = jet_p4.Px(); b1jet_py = jet_p4.Py(); b1jet_pz=jet_p4.Pz(); b1jet_energy = jet_p4.Energy();
 	b1jet_eta = jet_p4.Eta(); b1jet_phi = jet_p4.Phi();
 	b1jet_pt = jet_p4.Pt();
+	//cout <<"b1jet pt "<< b1jet_pt << endl;
 	hasb1jet = true;
         
        }
@@ -737,6 +774,7 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
 	b2jet_eta = jet_p4.Eta(); b2jet_phi = jet_p4.Phi();
 	b2jet_pt = jet_p4.Pt();
 	hasb2jet = true;
+	//cout <<"b2jet pt "<< b2jet_pt << endl;
        }
     }
       // b1jet should be different from b2jet
@@ -759,6 +797,7 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
       genmet_px = genMet->P4().Px();
       genmet_py = genMet->P4().Py();
       if (genmet > metPt_) hasGenMET = true;
+      //cout <<" has genMET " << genmet << endl;
     }
 
     //apply muon cuts on muons 
@@ -771,6 +810,7 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
       met_px = Met->P4().Px();
       met_py = Met->P4().Py();
       if (met > metPt_) hasMET = true;
+      //cout <<" has MET " << met << endl;
     }
 
     //apply muon cuts on muons 
@@ -946,34 +986,4 @@ void AnalyseEvents(ExRootTreeReader *treeReader, TTree *evtree)
 
 
 //------------------------------------------------------------------------------
-
-void DiHiggs_h2tohh(TString inputFile, TString outputFile)
-//void DiHiggs_htobb()
-{
-  //gSystem->Load("libDelphes");
-
-  TChain *chain = new TChain("Delphes");
-  //const char *inputFile("/home/taohuang/Herwig++/Delphes-3.2.0/delphes_output.root");
-  //const char *inputFile("/fdata/hepx/store/user/taohuang/Hhh/delphes320_B3_100k.root");
-  chain->Add(inputFile);
-
-  ExRootTreeReader *treeReader = new ExRootTreeReader(chain);
-
-
-  TTree *evtree = new TTree("evtree","event tree");
-  
-  
-  AnalyseEvents(treeReader, evtree);
-  //evtree->Print();
-  TFile *file = new TFile(outputFile,"recreate");
-  evtree->Write();
-  file->Close();
-
-  cout << "** Exiting..." << endl;
-
-  delete treeReader;
-  delete chain;
-  delete evtree;
-  delete file;
-}
 

@@ -37,7 +37,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-  char *appName = "Example";
+  const char *appName = "Example";
 
   if(argc != 2)
   {
@@ -47,9 +47,9 @@ int main(int argc, char *argv[])
   }
 
   gROOT->SetBatch();
-  int appargc = 1;
-  char *appargv[] = {appName};
-  TApplication app(appName, &appargc, appargv);
+  //int appargc = 1;
+  //char *appargv[] = {appName};
+  //TApplication app(appName, &appargc, appargv);
 
   TString inputFile(argv[1]);
 
